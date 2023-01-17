@@ -52,10 +52,10 @@ boundaries of that region in buffer."
       (buffer-string)
       (lambda (data)
         (openai--with-buffer openai-completion-buffer-name
-                             (openai--pop-to-buffer openai-completion-buffer-name)
-                             (let* ((choices (openai-completion--data-choices data))
-                                    (result (openai-completion--get-choice choices)))
-                               (insert result "\n"))))))))
+          (openai--pop-to-buffer openai-completion-buffer-name)
+          (let* ((choices (openai-completion--data-choices data))
+                 (result (openai-completion--get-choice choices)))
+            (insert (string-trim result) "\n"))))))))
 
 ;;;###autoload
 (defun codegpt-doc (start end)
