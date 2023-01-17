@@ -3,10 +3,9 @@
          "Use GPT-3 tp help you write code")
 
 (website-url "https://github.com/emacs-openai/codegpt")
-(keywords "comm" "openai")
+(keywords "convenience" "codegpt")
 
-(package-file "openai.el")
-(files "codegpt-*.el")
+(package-file "codegpt.el")
 
 (script "test" "echo \"Error: no test specified\" && exit 1")
 
