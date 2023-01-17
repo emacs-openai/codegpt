@@ -39,7 +39,10 @@
   :group 'comm
   :link '(url-link :tag "Repository" "https://github.com/emacs-openai/codegpt"))
 
-(defun codegpt-code--internal (instruction start end)
+;;
+;;; Application
+
+(defun codegpt--internal (instruction start end)
   "Do INSTRUCTION with partial code.
 
 The partial code is defined in with the region, and the START nad END are
@@ -54,8 +57,10 @@ boundaries of that region in buffer."
         (openai--with-buffer openai-completion-buffer-name
           (openai--pop-to-buffer openai-completion-buffer-name)
           (let* ((choices (openai-completion--data-choices data))
-                 (result (openai-completion--get-choice choices)))
-            (insert (string-trim result) "\n"))))))))
+                 (result (openai-completion--get-choice choices))
+                 (original-point (point)))
+            (insert (string-trim result) "\n")
+            (fill-region original-point (point)))))))))
 
 ;;;###autoload
 (defun codegpt-doc (start end)
@@ -64,7 +69,7 @@ boundaries of that region in buffer."
 This command is interactive region only, the START and END are boundaries of
 that region in buffer."
   (interactive "r")
-  (openai-completion-code--internal
+  (codegpt--internal
    "Please write the documentation for the following function."
    start end))
 
@@ -75,7 +80,7 @@ that region in buffer."
 This command is interactive region only, the START and END are boundaries of
 that region in buffer."
   (interactive "r")
-  (openai-completion-code--internal
+  (codegpt--internal
    "There is a bug in the following function, please help me fix it."
    start end))
 
@@ -86,7 +91,7 @@ that region in buffer."
 This command is interactive region only, the START and END are boundaries of
 that region in buffer."
   (interactive "r")
-  (openai-completion-code--internal
+  (codegpt--internal
    "What is the following?"
    start end))
 
@@ -97,7 +102,7 @@ that region in buffer."
 This command is interactive region only, the START and END are boundaries of
 that region in buffer."
   (interactive "r")
-  (openai-completion-code--internal
+  (codegpt--internal
    "Please improve the following."
    start end))
 
@@ -108,7 +113,7 @@ that region in buffer."
 This command is interactive region only, the START and END are boundaries of
 that region in buffer."
   (interactive "r")
-  (openai-completion-code--internal
+  (codegpt--internal
    (read-string "Instruction: ")
    start end))
 
