@@ -133,7 +133,7 @@ This command is interactive region only, the START and END are boundaries of
 that region in buffer."
   (interactive "r")
   (let*
-      ((offset (openai--completing-frame-offset openai-completion-code-action-alist))
+      ((offset (openai--completing-frame-offset codegpt-action-alist))
        (action
         (completing-read
          "Select completion action: "
@@ -144,8 +144,8 @@ that region in buffer."
                  (annotation-function
                   . ,(lambda (cand)
                        (concat (propertize " " 'display `((space :align-to (- right ,offset))))
-                               (cdr (assoc cand openai-completion-code-action-alist))))))
-             (complete-with-action action openai-completion-code-action-alist string predicate)))
+                               (cdr (assoc cand codegpt-action-alist))))))
+             (complete-with-action action codegpt-action-alist string predicate)))
          nil t)))
     (funcall
      (pcase action
