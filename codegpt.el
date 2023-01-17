@@ -7,7 +7,7 @@
 ;; URL: https://github.com/emacs-openai/codegpt
 ;; Version: 0.1.0
 ;; Package-Requires: ((emacs "26.1"))
-;; Keywords: convenience
+;; Keywords: convenience codegpt
 
 ;; This file is not part of GNU Emacs.
 
