@@ -6,6 +6,25 @@
 
 [![CI](https://github.com/emacs-openai/codegpt/actions/workflows/test.yml/badge.svg)](https://github.com/emacs-openai/codegpt/actions/workflows/test.yml)
 
+## 🔨 Usage
+
+The fastest way to use this package:
+
+```
+M-x codegpt
+```
+
+List of supported commands,
+
+| Commad            | Description                                     |
+|-------------------|-------------------------------------------------|
+| `codegpt`         | The master command                              |
+| `codegpt-custom`  | Write your own instruction                      |
+| `codegpt-doc`     | Automatically write documentation for your code |
+| `codegpt-fix`     | Find problems with it                           |
+| `codegpt-explain` | Explain the selected code                       |
+| `codegpt-improve` | Improve, refactor or optimize it                |
+
 ## Contribute
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
