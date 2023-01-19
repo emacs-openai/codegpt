@@ -7,9 +7,69 @@
 
 [![CI](https://github.com/emacs-openai/codegpt/actions/workflows/test.yml/badge.svg)](https://github.com/emacs-openai/codegpt/actions/workflows/test.yml)
 
+This Emacs Code extension allows you to use the official OpenAI API to generate
+code or natural language responses from OpenAI's [GPT-3](https://en.wikipedia.org/wiki/GPT-3)
+to your questions, right within the editor.
+
+## 🏆 Features
+
+WIP
+
+## 💾 Installation
+
+#### package.el
+
+This package is available from [JCS-ELPA](https://jcs-emacs.github.io/jcs-elpa/).
+Install from these repositories then you should be good to go!
+
+Normall, you don't need to add `(require 'codegpt)` to your confiugration since
+most `codegpt` commands are autoload and can be called without loading the module!
+
+#### use-package
+
+If you are using [use-package](https://www.emacswiki.org/emacs/UsePackage),
+add the following to your `init.el` file:
+
+```elisp
+(use-package codegpt :ensure t)
+```
+
+or with `straight.el`:
+
+```elisp
+(use-package codegpt
+  :straight (codegpt :type git :host github :repo "emacs-openai/codegpt"))
+```
+
+#### Manual installation
+
+Copy all `.el` files in this repository to `~/.emacs.d/lisp` and add the following:
+
+```elisp
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+(require codegpt)
+```
+
+## 🔑 Obtaining API key
+
+To use this extension, you will need an API key from OpenAI. To obtain one,
+follow these steps:
+
+1. Go to [OpenAI's website](https://beta.openai.com/account/api-keys). If you
+don't have an account, you will need to create one or sign up using your Google
+or Microsoft account.
+2. Click on the `Create new secret key` button.
+3. Copy the key and paste it into the `API Key` field in the extension settings.
+
+When you create a new account, you receive $18 in free credits for the API which
+you must use in the first 90 days. You can see pricing information
+[here](https://openai.com/api/pricing/). 1000 tokens are about 700 words, and
+you can see the token count for each request at the end of the response in the
+sidebar.
+
 ## 🔨 Usage
 
-The fastest way to use this package:
+Highlight or select code using the `set-mark-command`, then do:
 
 ```
 M-x codegpt
@@ -37,4 +97,3 @@ If you would like to contribute to this project, you may either
 clone and make pull requests to this repository. Or you can
 clone the project and establish your own branch of this tool.
 Any methods are welcome!
-
