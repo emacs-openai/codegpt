@@ -39,28 +39,50 @@
   :group 'comm
   :link '(url-link :tag "Repository" "https://github.com/emacs-openai/codegpt"))
 
+(defcustom codegpt-focus-p t
+  "If this value is `nil`, do not move focus to output buffer."
+  :type 'boolean
+  :group 'codegpt)
+
+(defconst codegpt-buffer-name "*CodeGPT*"
+  "Buffer name to do completion task.")
+
 ;;
 ;;; Application
+
+(defmacro codegpt--ask-in-buffer (instruction &rest body)
+  "Insert INSTRUCTION then execute BODY form."
+  `(progn
+     (openai--pop-to-buffer codegpt-buffer-name)  ; create it
+     (openai--with-buffer codegpt-buffer-name
+       (erase-buffer)
+       (insert ,instruction "\n\n")
+       ,@body)))
 
 (defun codegpt--internal (instruction start end)
   "Do INSTRUCTION with partial code.
 
 The partial code is defined in with the region, and the START nad END are
 boundaries of that region in buffer."
-  (let ((text (string-trim (buffer-substring start end))))
-    (openai-completon--ask-in-buffer
+  (let ((text (string-trim (buffer-substring start end)))
+        (original-window (selected-window)))
+    (codegpt--ask-in-buffer
      instruction
      (insert text "\n\n")
      (openai-completion
       (buffer-string)
       (lambda (data)
-        (openai--with-buffer openai-completion-buffer-name
-          (openai--pop-to-buffer openai-completion-buffer-name)
+        (openai--with-buffer codegpt-buffer-name
+          (openai--pop-to-buffer codegpt-buffer-name)
           (let* ((choices (openai-completion--data-choices data))
                  (result (openai-completion--get-choice choices))
                  (original-point (point)))
             (insert (string-trim result) "\n")
-            (fill-region original-point (point)))))))))
+            (fill-region original-point (point))))
+        (unless codegpt-focus-p
+          (select-window original-window))))
+     (unless codegpt-focus-p
+       (select-window original-window)))))
 
 ;;;###autoload
 (defun codegpt-doc (start end)
