@@ -11,9 +11,9 @@ This Emacs Code extension allows you to use the official OpenAI API to generate
 code or natural language responses from OpenAI's [GPT-3](https://en.wikipedia.org/wiki/GPT-3)
 to your questions, right within the editor.
 
-## 🏆 Features
-
-WIP
+<p align="center">
+<img alt="explain" src="./etc/explain.png"/>
+</p>
 
 ## 💾 Installation
 
