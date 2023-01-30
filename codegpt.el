@@ -52,6 +52,7 @@
 
 (defmacro codegpt--ask-in-buffer (instruction &rest body)
   "Insert INSTRUCTION then execute BODY form."
+  (declare (indent 1))
   `(progn
      (openai--pop-to-buffer codegpt-buffer-name)  ; create it
      (openai--with-buffer codegpt-buffer-name
@@ -66,23 +67,22 @@ The partial code is defined in with the region, and the START nad END are
 boundaries of that region in buffer."
   (let ((text (string-trim (buffer-substring start end)))
         (original-window (selected-window)))
-    (codegpt--ask-in-buffer
-     instruction
-     (insert text "\n\n")
-     (openai-completion
-      (buffer-string)
-      (lambda (data)
-        (openai--with-buffer codegpt-buffer-name
-          (openai--pop-to-buffer codegpt-buffer-name)
-          (let* ((choices (openai-completion--data-choices data))
-                 (result (openai-completion--get-choice choices))
-                 (original-point (point)))
-            (insert (string-trim result) "\n")
-            (fill-region original-point (point))))
-        (unless codegpt-focus-p
-          (select-window original-window))))
-     (unless codegpt-focus-p
-       (select-window original-window)))))
+    (codegpt--ask-in-buffer instruction
+      (insert text "\n\n")
+      (openai-completion
+       (buffer-string)
+       (lambda (data)
+         (openai--with-buffer codegpt-buffer-name
+           (openai--pop-to-buffer codegpt-buffer-name)
+           (let* ((choices (openai-completion--data-choices data))
+                  (result (openai-completion--get-choice choices))
+                  (original-point (point)))
+             (insert (string-trim result) "\n")
+             (fill-region original-point (point))))
+         (unless codegpt-focus-p
+           (select-window original-window))))
+      (unless codegpt-focus-p
+        (select-window original-window)))))
 
 ;;;###autoload
 (defun codegpt-doc (start end)
