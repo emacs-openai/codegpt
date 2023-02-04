@@ -59,7 +59,7 @@ follow these steps:
 don't have an account, you will need to create one or sign up using your Google
 or Microsoft account.
 2. Click on the `Create new secret key` button.
-3. Copy the key and paste it into the `API Key` field in the extension settings.
+3. Copy the key and paste into the 'API Key' field under the 'openai' custom group settings.
 
 When you create a new account, you receive $18 in free credits for the API which
 you must use in the first 90 days. You can see pricing information
