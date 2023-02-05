@@ -57,14 +57,6 @@
   :type 'list
   :group 'codegpt)
 
-(defconst codegpt--actions-functions
-  '(("custom"  . codegpt-custom)
-    ("doc"     . codegpt-doc)
-    ("fix"     . codegpt-fix)
-    ("explain" . codegpt-explain)
-    ("improve" . codegpt-improve))
-  "Alist of code completion actions and its functions.")
-
 ;;
 ;;; Application
 
@@ -160,9 +152,7 @@ that region in buffer."
 (defun codegept--execute-predefined-template (start end question)
   "Ask predefined QUESTION for provided region.
 the START and END are boundaries of that region in buffer."
-  (codegpt--internal
-   question
-   start end))
+  (codegpt--internal question start end))
 
 ;;;###autoload
 (defun codegpt (start end)
@@ -186,12 +176,13 @@ that region in buffer."
                                (cdr (assoc cand codegpt-action-alist))))))
              (complete-with-action action codegpt-action-alist string predicate)))
          nil t))
-       (action-fn (cdr-safe (assoc action codegpt--actions-functions))))
-    (if action-fn
+       ;; XXX: Guess the function name, `codegpt-xxx'
+       (action-fn (intern (format "codegpt-%s" action))))
+    (if (fboundp action-fn)
         (funcall action-fn start end)
+      ;; Call predefined action from `codegpt-action-alist'
       (codegept--execute-predefined-template
-       start
-       end
+       start end
        (cdr (assoc action codegpt-action-alist))))))
 
 (provide 'codegpt)

@@ -47,7 +47,7 @@ Copy all `.el` files in this repository to `~/.emacs.d/lisp` and add the followi
 
 ```elisp
 (add-to-list 'load-path "~/.emacs.d/lisp/")
-(require codegpt)
+(require 'codegpt)
 ```
 
 ## 🔑 Obtaining API key
