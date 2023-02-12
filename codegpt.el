@@ -32,7 +32,7 @@
 ;;; Code:
 
 (require 'openai)
-(require 'openai-completions)
+(require 'openai-completion)
 
 (defgroup codegpt nil
   "Use GPT-3 tp help you write code."
