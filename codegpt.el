@@ -31,7 +31,7 @@
 
 ;;; Code:
 
-(require 'openai-completion)
+(require 'openai)
 
 (defgroup codegpt nil
   "Use GPT-3 tp help you write code."
@@ -84,8 +84,8 @@ boundaries of that region in buffer."
        (lambda (data)
          (openai--with-buffer codegpt-buffer-name
            (openai--pop-to-buffer codegpt-buffer-name)
-           (let* ((choices (openai-completion--data-choices data))
-                  (result (openai-completion--get-choice choices))
+           (let* ((choices (openai--data-choices data))
+                  (result (openai--get-choice choices))
                   (original-point (point)))
              (insert (string-trim result) "\n")
              (fill-region original-point (point))))
