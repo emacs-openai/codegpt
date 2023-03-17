@@ -90,6 +90,7 @@ List of supported commands,
 
 #### 🧪 Variables
 
+- `codegpt-model` - ID of the model to use.
 - `codegpt-max-tokens` - The maximum number of tokens to generate in the completion.
 - `codegpt-temperature` - What sampling temperature to use.
 

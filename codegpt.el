@@ -58,6 +58,11 @@
   :type 'list
   :group 'codegpt)
 
+(defcustom codegpt-model "text-davinci-003"
+  "ID of the model to use."
+  :type 'string
+  :group 'codegpt)
+
 (defcustom codegpt-max-tokens 4000
   "The maximum number of tokens to generate in the completion."
   :type 'integer
@@ -102,6 +107,7 @@ boundaries of that region in buffer."
              (fill-region original-point (point))))
          (unless codegpt-focus-p
            (select-window original-window)))
+       :model codegpt-model
        :max-tokens codegpt-max-tokens
        :temperature codegpt-temperature)
       (unless codegpt-focus-p
