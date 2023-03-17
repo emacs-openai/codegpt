@@ -58,6 +58,16 @@
   :type 'list
   :group 'codegpt)
 
+(defcustom codegpt-max-tokens 4000
+  "The maximum number of tokens to generate in the completion."
+  :type 'integer
+  :group 'codegpt)
+
+(defcustom codegpt-temperature 1.0
+  "What sampling temperature to use."
+  :type 'number
+  :group 'openai)
+
 ;;
 ;;; Application
 
@@ -91,7 +101,9 @@ boundaries of that region in buffer."
              (insert (string-trim result) "\n")
              (fill-region original-point (point))))
          (unless codegpt-focus-p
-           (select-window original-window))))
+           (select-window original-window)))
+       :max-tokens codegpt-max-tokens
+       :temperature codegpt-temperature)
       (unless codegpt-focus-p
         (select-window original-window)))))
 
