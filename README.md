@@ -22,7 +22,7 @@ to your questions, right within the editor.
 This package is available from [JCS-ELPA](https://jcs-emacs.github.io/jcs-elpa/).
 Install from these repositories then you should be good to go!
 
-Normall, you don't need to add `(require 'codegpt)` to your confiugration since
+Normally, you don't need to add `(require 'codegpt)` to your confiugration since
 most `codegpt` commands are autoload and can be called without loading the module!
 
 #### use-package
@@ -85,6 +85,14 @@ List of supported commands,
 | `codegpt-fix`     | Find problems with it                           |
 | `codegpt-explain` | Explain the selected code                       |
 | `codegpt-improve` | Improve, refactor or optimize it                |
+
+## 📝 Customization
+
+#### 🧪 Variables
+
+- `codegpt-model` - ID of the model to use.
+- `codegpt-max-tokens` - The maximum number of tokens to generate in the completion.
+- `codegpt-temperature` - What sampling temperature to use.
 
 ## Contribute
 
