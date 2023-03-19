@@ -86,6 +86,17 @@
        (insert ,instruction "\n\n")
        ,@body)))
 
+(defun codegpt--fill-region (start end)
+  "Like function `fill-region' (START to END), improve readability."
+  (save-restriction
+    (narrow-to-region start end)
+    (goto-char (point-min))
+    (while (not (eobp))
+      (end-of-line)
+      (when (< fill-column (current-column))
+        (fill-region (line-beginning-position) (line-end-position)))
+      (forward-line 1))))
+
 (defun codegpt--internal (instruction start end)
   "Do INSTRUCTION with partial code.
 
@@ -104,7 +115,7 @@ boundaries of that region in buffer."
                   (result (openai--get-choice choices))
                   (original-point (point)))
              (insert (string-trim result) "\n")
-             (fill-region original-point (point))))
+             (codegpt--fill-region original-point (point))))
          (unless codegpt-focus-p
            (select-window original-window)))
        :model codegpt-model
