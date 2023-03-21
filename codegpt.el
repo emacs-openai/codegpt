@@ -103,7 +103,7 @@
 
 (defun codegpt-header-line ()
   "Header line for CodeGPT."
-  (format " %s[Tunnel] %s, [Model] %s"
+  (format " %s[Tunnel] %s  [Model] %s"
           (if codegpt-requesting-p
               (let* ((spinner (if (symbolp codegpt-spinner-type)
                                   (cdr (assoc codegpt-spinner-type spinner-types))
