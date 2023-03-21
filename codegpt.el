@@ -129,8 +129,8 @@
   (setq-local header-line-format `((:eval (codegpt-header-line))))
   (add-hook 'kill-buffer-hook #'codegpt-mode--cancel-timer nil t)
   (codegpt-mode--cancel-timer)
-  (setq codegpt-spinner-timer (run-with-timer 0.1
-                                              0.1
+  (setq codegpt-spinner-timer (run-with-timer (/ spinner-frames-per-second 60.0)
+                                              (/ spinner-frames-per-second 60.0)
                                               (lambda ()
                                                 (cl-incf codegpt-spinner-counter)
                                                 (force-mode-line-update)))))
@@ -144,10 +144,10 @@
   `(progn
      (openai--pop-to-buffer codegpt-buffer-name)  ; create it
      (openai--with-buffer codegpt-buffer-name
-       (codegpt-mode)
-       (erase-buffer)
-       (insert ,instruction "\n\n")
-       ,@body)))
+                          (codegpt-mode)
+                          (erase-buffer)
+                          (insert ,instruction "\n\n")
+                          ,@body)))
 
 (defun codegpt--fill-region (start end)
   "Like function `fill-region' (START to END), improve readability."
@@ -169,43 +169,43 @@ boundaries of that region in buffer."
   (let ((text (string-trim (buffer-substring start end)))
         (original-window (selected-window)))
     (codegpt--ask-in-buffer instruction
-      (insert text "\n\n")
-      (funcall
-       (cl-case codegpt-tunnel
-         (`completion #'openai-completion)
-         (`chat       #'openai-chat))
-       (cl-case codegpt-tunnel
-         (`completion (buffer-string))
-         (`chat       `[(("role"    . "user")
-                         ("content" . ,(buffer-string)))]))
-       (lambda (data)
-         (setq codegpt-requesting-p nil)
-         (codegpt-mode--cancel-timer)
-         (openai--with-buffer codegpt-buffer-name
-           (openai--pop-to-buffer codegpt-buffer-name)
-           (let ((original-point (point)))
-             (cl-case codegpt-tunnel
-               (`completion
-                (let* ((choices (openai--data-choices data))
-                       (result (openai--get-choice choices)))
-                  (insert (string-trim result) "\n")))
-               (`chat
-                (let ((choices (let-alist data .choices))
-                      (result))
-                  (mapc (lambda (choice)
-                          (let-alist choice
-                            (let-alist .message
-                              (setq result (string-trim .content)))))
-                        choices)
-                  (insert (string-trim result) "\n"))))
-             (codegpt--fill-region original-point (point))))
-         (unless codegpt-focus-p
-           (select-window original-window)))
-       :model codegpt-model
-       :max-tokens codegpt-max-tokens
-       :temperature codegpt-temperature)
-      (unless codegpt-focus-p
-        (select-window original-window)))))
+                            (insert text "\n\n")
+                            (funcall
+                             (cl-case codegpt-tunnel
+                               (`completion #'openai-completion)
+                               (`chat       #'openai-chat))
+                             (cl-case codegpt-tunnel
+                               (`completion (buffer-string))
+                               (`chat       `[(("role"    . "user")
+                                               ("content" . ,(buffer-string)))]))
+                             (lambda (data)
+                               (setq codegpt-requesting-p nil)
+                               (codegpt-mode--cancel-timer)
+                               (openai--with-buffer codegpt-buffer-name
+                                                    (openai--pop-to-buffer codegpt-buffer-name)
+                                                    (let ((original-point (point)))
+                                                      (cl-case codegpt-tunnel
+                                                        (`completion
+                                                         (let* ((choices (openai--data-choices data))
+                                                                (result (openai--get-choice choices)))
+                                                           (insert (string-trim result) "\n")))
+                                                        (`chat
+                                                         (let ((choices (let-alist data .choices))
+                                                               (result))
+                                                           (mapc (lambda (choice)
+                                                                   (let-alist choice
+                                                                     (let-alist .message
+                                                                       (setq result (string-trim .content)))))
+                                                                 choices)
+                                                           (insert (string-trim result) "\n"))))
+                                                      (codegpt--fill-region original-point (point))))
+                               (unless codegpt-focus-p
+                                 (select-window original-window)))
+                             :model codegpt-model
+                             :max-tokens codegpt-max-tokens
+                             :temperature codegpt-temperature)
+                            (unless codegpt-focus-p
+                              (select-window original-window)))))
 
 ;;;###autoload
 (defun codegpt-doc (start end)
