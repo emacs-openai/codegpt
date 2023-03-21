@@ -22,7 +22,7 @@ to your questions, right within the editor.
 This package is available from [JCS-ELPA](https://jcs-emacs.github.io/jcs-elpa/).
 Install from these repositories then you should be good to go!
 
-Normally, you don't need to add `(require 'codegpt)` to your confiugration since
+Normally, you don't need to add `(require 'codegpt)` to your configuration since
 most `codegpt` commands are autoload and can be called without loading the module!
 
 #### use-package
