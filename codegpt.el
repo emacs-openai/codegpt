@@ -73,7 +73,7 @@
   :type 'string
   :group 'codegpt)
 
-(defcustom codegpt-max-tokens 4000
+(defcustom codegpt-max-tokens 2000
   "The maximum number of tokens to generate in the completion."
   :type 'integer
   :group 'codegpt)
