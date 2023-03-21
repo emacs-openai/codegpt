@@ -86,10 +86,21 @@ List of supported commands,
 | `codegpt-explain` | Explain the selected code                       |
 | `codegpt-improve` | Improve, refactor or optimize it                |
 
+## 🌟 Using ChatGPT
+
+The default is completing through the [Completions](https://platform.openai.com/docs/api-reference/completions)
+tunnel. If you want to use ChatGPT, do the following:
+
+```elisp
+(setq codegpt-tunnel 'chat            ; The default is 'completion
+      codegpt-model "gpt-3.5-turbo")  ; You can pick any model you want!
+```
+
 ## 📝 Customization
 
 #### 🧪 Variables
 
+- `codegpt-tunnel`- Completion channel you want to use. (Default: `completion`)
 - `codegpt-model` - ID of the model to use.
 - `codegpt-max-tokens` - The maximum number of tokens to generate in the completion.
 - `codegpt-temperature` - What sampling temperature to use.

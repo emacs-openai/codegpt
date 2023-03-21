@@ -6,7 +6,7 @@
 ;; Maintainer: Shen, Jen-Chieh <jcs090218@gmail.com>
 ;; URL: https://github.com/emacs-openai/codegpt
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "26.1") (openai "0.1.0"))
+;; Package-Requires: ((emacs "26.1") (openai "0.1.0") (spinner "1.7.4"))
 ;; Keywords: convenience codegpt
 
 ;; This file is not part of GNU Emacs.
@@ -31,8 +31,12 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (require 'openai)
+(require 'openai-chat)
 (require 'openai-completion)
+(require 'spinner)
 
 (defgroup codegpt nil
   "Use GPT-3 tp help you write code."
@@ -58,6 +62,12 @@
   :type 'list
   :group 'codegpt)
 
+(defcustom codegpt-tunnel 'completion
+  "Tunnel to use for the tasks."
+  :type '(choice (const :tag "Through Completion" completion)
+                 (const :tag "Through ChatGPT" chat))
+  :group 'codegpt)
+
 (defcustom codegpt-model "text-davinci-003"
   "ID of the model to use."
   :type 'string
@@ -73,6 +83,58 @@
   :type 'number
   :group 'openai)
 
+(defcustom codegpt-spinner-type 'moon
+  "The type of the spinner."
+  :type '(choice (const :tag "Key to variable `spinner-types'" symbol)
+                 (const :tag "Vector of characters" vector))
+  :group 'openai)
+
+(defvar codegpt-requesting-p nil
+  "Non-nil if sitll requesting.")
+
+(defvar codegpt-spinner-counter 0
+  "Spinner counter.")
+
+(defvar codegpt-spinner-timer nil
+  "Spinner timer.")
+
+;;
+;;; Major Mode
+
+(defun codegpt-header-line ()
+  "Header line for CodeGPT."
+  (format " %s[Tunnel] %s, [Model] %s"
+          (if codegpt-requesting-p
+              (let* ((spinner (if (symbolp codegpt-spinner-type)
+                                  (cdr (assoc codegpt-spinner-type spinner-types))
+                                codegpt-spinner-type))
+                     (len (length spinner)))
+                (when (<= len codegpt-spinner-counter)
+                  (setq codegpt-spinner-counter 0))
+                (format "%s " (elt spinner codegpt-spinner-counter)))
+            "")
+          codegpt-tunnel codegpt-model))
+
+(defun codegpt-mode--cancel-timer ()
+  "Cancel spinner timer."
+  (when (timerp codegpt-spinner-timer)
+    (cancel-timer codegpt-spinner-timer)))
+
+;;;###autoload
+(define-derived-mode codegpt-mode fundamental-mode "CodeGPT"
+  "Major mode for `codegpt-mode'.
+
+\\<codegpt-mode-map>"
+  (setq codegpt-spinner-counter 0)
+  (setq-local header-line-format `((:eval (codegpt-header-line))))
+  (add-hook 'kill-buffer-hook #'codegpt-mode--cancel-timer nil t)
+  (codegpt-mode--cancel-timer)
+  (setq codegpt-spinner-timer (run-with-timer 0.1
+                                              0.1
+                                              (lambda ()
+                                                (cl-incf codegpt-spinner-counter)
+                                                (force-mode-line-update)))))
+
 ;;
 ;;; Application
 
@@ -82,6 +144,7 @@
   `(progn
      (openai--pop-to-buffer codegpt-buffer-name)  ; create it
      (openai--with-buffer codegpt-buffer-name
+       (codegpt-mode)
        (erase-buffer)
        (insert ,instruction "\n\n")
        ,@body)))
@@ -102,19 +165,39 @@
 
 The partial code is defined in with the region, and the START nad END are
 boundaries of that region in buffer."
+  (setq codegpt-requesting-p t)
   (let ((text (string-trim (buffer-substring start end)))
         (original-window (selected-window)))
     (codegpt--ask-in-buffer instruction
       (insert text "\n\n")
-      (openai-completion
-       (buffer-string)
+      (funcall
+       (cl-case codegpt-tunnel
+         (`completion #'openai-completion)
+         (`chat       #'openai-chat))
+       (cl-case codegpt-tunnel
+         (`completion (buffer-string))
+         (`chat       `[(("role"    . "user")
+                         ("content" . ,(buffer-string)))]))
        (lambda (data)
+         (setq codegpt-requesting-p nil)
+         (codegpt-mode--cancel-timer)
          (openai--with-buffer codegpt-buffer-name
            (openai--pop-to-buffer codegpt-buffer-name)
-           (let* ((choices (openai--data-choices data))
-                  (result (openai--get-choice choices))
-                  (original-point (point)))
-             (insert (string-trim result) "\n")
+           (let ((original-point (point)))
+             (cl-case codegpt-tunnel
+               (`completion
+                (let* ((choices (openai--data-choices data))
+                       (result (openai--get-choice choices)))
+                  (insert (string-trim result) "\n")))
+               (`chat
+                (let ((choices (let-alist data .choices))
+                      (result))
+                  (mapc (lambda (choice)
+                          (let-alist choice
+                            (let-alist .message
+                              (setq result (string-trim .content)))))
+                        choices)
+                  (insert (string-trim result) "\n"))))
              (codegpt--fill-region original-point (point))))
          (unless codegpt-focus-p
            (select-window original-window)))
