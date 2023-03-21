@@ -6,7 +6,7 @@
 ;; Maintainer: Shen, Jen-Chieh <jcs090218@gmail.com>
 ;; URL: https://github.com/emacs-openai/codegpt
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "26.1") (openai "0.1.0"))
+;; Package-Requires: ((emacs "26.1") (openai "0.1.0") (spinner "1.7.4"))
 ;; Keywords: convenience codegpt
 
 ;; This file is not part of GNU Emacs.
@@ -31,9 +31,12 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (require 'openai)
 (require 'openai-chat)
 (require 'openai-completion)
+(require 'spinner)
 
 (defgroup codegpt nil
   "Use GPT-3 tp help you write code."
@@ -80,19 +83,57 @@
   :type 'number
   :group 'openai)
 
+(defcustom codegpt-spinner-type 'moon
+  "The type of the spinner."
+  :type '(choice (const :tag "Key to variable `spinner-types'" symbol)
+                 (const :tag "Vector of characters" vector))
+  :group 'openai)
+
+(defvar codegpt-requesting-p nil
+  "Non-nil if sitll requesting.")
+
+(defvar codegpt-spinner-counter 0
+  "Spinner counter.")
+
+(defvar codegpt-spinner-timer nil
+  "Spinner timer.")
+
 ;;
 ;;; Major Mode
 
 (defun codegpt-header-line ()
   "Header line for CodeGPT."
-  (format " Tunnel: %s, Model: %s" codegpt-tunnel codegpt-model))
+  (format " %s[Tunnel] %s, [Model] %s"
+          (if codegpt-requesting-p
+              (let* ((spinner (if (symbolp codegpt-spinner-type)
+                                  (cdr (assoc codegpt-spinner-type spinner-types))
+                                codegpt-spinner-type))
+                     (len (length spinner)))
+                (when (<= len codegpt-spinner-counter)
+                  (setq codegpt-spinner-counter 0))
+                (format "%s " (elt spinner codegpt-spinner-counter)))
+            "")
+          codegpt-tunnel codegpt-model))
+
+(defun codegpt-mode--cancel-timer ()
+  "Cancel spinner timer."
+  (when (timerp codegpt-spinner-timer)
+    (cancel-timer codegpt-spinner-timer)))
 
 ;;;###autoload
 (define-derived-mode codegpt-mode fundamental-mode "CodeGPT"
   "Major mode for `codegpt-mode'.
 
 \\<codegpt-mode-map>"
-  (setq-local header-line-format `((:eval (codegpt-header-line)))))
+  (setq codegpt-spinner-counter 0)
+  (setq-local header-line-format `((:eval (codegpt-header-line))))
+  (add-hook 'kill-buffer-hook #'codegpt-mode--cancel-timer nil t)
+  (codegpt-mode--cancel-timer)
+  (setq codegpt-spinner-timer (run-with-timer 0.1
+                                              0.1
+                                              (lambda ()
+                                                (cl-incf codegpt-spinner-counter)
+                                                (force-mode-line-update)))))
 
 ;;
 ;;; Application
@@ -124,6 +165,7 @@
 
 The partial code is defined in with the region, and the START nad END are
 boundaries of that region in buffer."
+  (setq codegpt-requesting-p t)
   (let ((text (string-trim (buffer-substring start end)))
         (original-window (selected-window)))
     (codegpt--ask-in-buffer instruction
@@ -137,8 +179,9 @@ boundaries of that region in buffer."
          (`chat       `[(("role"    . "user")
                          ("content" . ,(buffer-string)))]))
        (lambda (data)
+         (setq codegpt-requesting-p nil)
+         (codegpt-mode--cancel-timer)
          (openai--with-buffer codegpt-buffer-name
-           (codegpt-mode)
            (openai--pop-to-buffer codegpt-buffer-name)
            (let ((original-point (point)))
              (cl-case codegpt-tunnel
