@@ -88,8 +88,8 @@ List of supported commands,
 
 ## 🌟 Using ChatGPT
 
-The default is completing through [Completions](https://platform.openai.com/docs/api-reference/completions)
-tunnel. If you want to use ChatGPT, do:
+The default is completing through the [Completions](https://platform.openai.com/docs/api-reference/completions)
+tunnel. If you want to use ChatGPT, do the following:
 
 ```elisp
 (setq codegpt-tunnel 'chat            ; The default is 'completion
