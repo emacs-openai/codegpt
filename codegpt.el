@@ -32,6 +32,7 @@
 ;;; Code:
 
 (require 'openai)
+(require 'openai-chat)
 (require 'openai-completion)
 
 (defgroup codegpt nil
@@ -58,6 +59,12 @@
   :type 'list
   :group 'codegpt)
 
+(defcustom codegpt-tunnel 'completion
+  "Tunnel to use for the tasks."
+  :type '(choice (const :tag "Through Completion" completion)
+                 (const :tag "Through ChatGPT" chat))
+  :group 'codegpt)
+
 (defcustom codegpt-model "text-davinci-003"
   "ID of the model to use."
   :type 'string
@@ -74,6 +81,20 @@
   :group 'openai)
 
 ;;
+;;; Major Mode
+
+(defun codegpt-header-line ()
+  "Header line for CodeGPT."
+  (format " Tunnel: %s, Model: %s" codegpt-tunnel codegpt-model))
+
+;;;###autoload
+(define-derived-mode codegpt-mode fundamental-mode "CodeGPT"
+  "Major mode for `codegpt-mode'.
+
+\\<codegpt-mode-map>"
+  (setq-local header-line-format `((:eval (codegpt-header-line)))))
+
+;;
 ;;; Application
 
 (defmacro codegpt--ask-in-buffer (instruction &rest body)
@@ -82,6 +103,7 @@
   `(progn
      (openai--pop-to-buffer codegpt-buffer-name)  ; create it
      (openai--with-buffer codegpt-buffer-name
+       (codegpt-mode)
        (erase-buffer)
        (insert ,instruction "\n\n")
        ,@body)))
@@ -106,15 +128,33 @@ boundaries of that region in buffer."
         (original-window (selected-window)))
     (codegpt--ask-in-buffer instruction
       (insert text "\n\n")
-      (openai-completion
-       (buffer-string)
+      (funcall
+       (cl-case codegpt-tunnel
+         (`completion #'openai-completion)
+         (`chat       #'openai-chat))
+       (cl-case codegpt-tunnel
+         (`completion (buffer-string))
+         (`chat       `[(("role"    . "user")
+                         ("content" . ,(buffer-string)))]))
        (lambda (data)
          (openai--with-buffer codegpt-buffer-name
+           (codegpt-mode)
            (openai--pop-to-buffer codegpt-buffer-name)
-           (let* ((choices (openai--data-choices data))
-                  (result (openai--get-choice choices))
-                  (original-point (point)))
-             (insert (string-trim result) "\n")
+           (let ((original-point (point)))
+             (cl-case codegpt-tunnel
+               (`completion
+                (let* ((choices (openai--data-choices data))
+                       (result (openai--get-choice choices)))
+                  (insert (string-trim result) "\n")))
+               (`chat
+                (let ((choices (let-alist data .choices))
+                      (result))
+                  (mapc (lambda (choice)
+                          (let-alist choice
+                            (let-alist .message
+                              (setq result (string-trim .content)))))
+                        choices)
+                  (insert (string-trim result) "\n"))))
              (codegpt--fill-region original-point (point))))
          (unless codegpt-focus-p
            (select-window original-window)))
