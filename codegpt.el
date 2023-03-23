@@ -6,7 +6,7 @@
 ;; Maintainer: Shen, Jen-Chieh <jcs090218@gmail.com>
 ;; URL: https://github.com/emacs-openai/codegpt
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "26.1") (openai "0.1.0") (spinner "1.7.4"))
+;; Package-Requires: ((emacs "26.1") (openai "0.1.0") (markdown-mode "2.1") (spinner "1.7.4"))
 ;; Keywords: convenience codegpt
 
 ;; This file is not part of GNU Emacs.
@@ -36,6 +36,7 @@
 (require 'openai)
 (require 'openai-chat)
 (require 'openai-completion)
+(require 'markdown-mode)
 (require 'spinner)
 
 (defgroup codegpt nil
@@ -138,16 +139,15 @@
 ;;
 ;;; Application
 
-(defmacro codegpt--ask-in-buffer (instruction &rest body)
-  "Insert INSTRUCTION then execute BODY form."
-  (declare (indent 1))
-  `(progn
-     (openai--pop-to-buffer codegpt-buffer-name)  ; create it
-     (openai--with-buffer codegpt-buffer-name
-       (codegpt-mode)
-       (erase-buffer)
-       (insert ,instruction "\n\n")
-       ,@body)))
+(defun codegpt--render-markdown (content)
+  "Render CONTENT in markdown."
+  (if (featurep 'markdown-mode)
+      (with-temp-buffer
+        (insert content)
+        (delay-mode-hooks (markdown-mode))
+        (ignore-errors (font-lock-ensure))
+        (buffer-string))
+    content))
 
 (defun codegpt--fill-region (start end)
   "Like function `fill-region' (START to END), improve readability."
@@ -159,6 +159,17 @@
       (when (< fill-column (current-column))
         (fill-region (line-beginning-position) (line-end-position)))
       (forward-line 1))))
+
+(defmacro codegpt--ask-in-buffer (instruction &rest body)
+  "Insert INSTRUCTION then execute BODY form."
+  (declare (indent 1))
+  `(progn
+     (openai--pop-to-buffer codegpt-buffer-name)  ; create it
+     (openai--with-buffer codegpt-buffer-name
+       (codegpt-mode)
+       (erase-buffer)
+       (insert ,instruction "\n\n")
+       ,@body)))
 
 (defun codegpt--internal (instruction start end)
   "Do INSTRUCTION with partial code.
@@ -187,8 +198,10 @@ boundaries of that region in buffer."
              (cl-case codegpt-tunnel
                (`completion
                 (let* ((choices (openai--data-choices data))
-                       (result (openai--get-choice choices)))
-                  (insert (string-trim result) "\n")))
+                       (result (openai--get-choice choices))
+                       (result (string-trim result))
+                       (result (codegpt--render-markdown result)))
+                  (insert result "\n")))
                (`chat
                 (let ((choices (let-alist data .choices))
                       (result))
@@ -197,7 +210,9 @@ boundaries of that region in buffer."
                             (let-alist .message
                               (setq result (string-trim .content)))))
                         choices)
-                  (insert (string-trim result) "\n"))))
+                  (setq result (string-trim result)
+                        result (codegpt--render-markdown result))
+                  (insert result "\n"))))
              (codegpt--fill-region original-point (point))))
          (unless codegpt-focus-p
            (select-window original-window)))
