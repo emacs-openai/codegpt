@@ -9,6 +9,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 > Released N/A
 
 * Add support for ChatGPT (#12)
+* Render result with markdown (#13)
 
 ## 0.1.0
 > Released Feb 05, 2023
