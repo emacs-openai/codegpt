@@ -93,11 +93,8 @@
 (defvar codegpt-requesting-p nil
   "Non-nil if sitll requesting.")
 
-(defvar codegpt-spinner-counter 0
-  "Spinner counter.")
-
-(defvar codegpt-spinner-timer nil
-  "Spinner timer.")
+(defvar codegpt-spinner nil
+  "Spinner.")
 
 ;;
 ;;; Major Mode
@@ -105,36 +102,25 @@
 (defun codegpt-header-line ()
   "Header line for CodeGPT."
   (format " %s[Tunnel] %s  [Model] %s"
-          (if codegpt-requesting-p
-              (let* ((spinner (if (symbolp codegpt-spinner-type)
-                                  (cdr (assoc codegpt-spinner-type spinner-types))
-                                codegpt-spinner-type))
-                     (len (length spinner)))
-                (when (<= len codegpt-spinner-counter)
-                  (setq codegpt-spinner-counter 0))
-                (format "%s " (elt spinner codegpt-spinner-counter)))
+          (if-let ((frame (spinner-print codegpt-spinner)))
+              (concat frame " ")
             "")
           codegpt-tunnel codegpt-model))
 
-(defun codegpt-mode--cancel-timer ()
+(defun codegpt-mode--kill-buffer-hook ()
   "Cancel spinner timer."
-  (when (timerp codegpt-spinner-timer)
-    (cancel-timer codegpt-spinner-timer)))
+  (spinner-stop codegpt-spinner))
 
 ;;;###autoload
 (define-derived-mode codegpt-mode fundamental-mode "CodeGPT"
   "Major mode for `codegpt-mode'.
 
 \\<codegpt-mode-map>"
-  (setq codegpt-spinner-counter 0)
   (setq-local header-line-format `((:eval (codegpt-header-line))))
-  (add-hook 'kill-buffer-hook #'codegpt-mode--cancel-timer nil t)
-  (codegpt-mode--cancel-timer)
-  (setq codegpt-spinner-timer (run-with-timer (/ spinner-frames-per-second 60.0)
-                                              (/ spinner-frames-per-second 60.0)
-                                              (lambda ()
-                                                (cl-incf codegpt-spinner-counter)
-                                                (force-mode-line-update)))))
+  (add-hook 'kill-buffer-hook #'codegpt-mode--kill-buffer-hook nil t)
+  (unless (spinner-p codegpt-spinner)
+    (setq codegpt-spinner (make-spinner codegpt-spinner-type t)))
+  (spinner-start codegpt-spinner))
 
 ;;
 ;;; Application
@@ -191,7 +177,7 @@ boundaries of that region in buffer."
                          ("content" . ,(buffer-string)))]))
        (lambda (data)
          (setq codegpt-requesting-p nil)
-         (codegpt-mode--cancel-timer)
+         (spinner-stop codegpt-spinner)
          (openai--with-buffer codegpt-buffer-name
            (openai--pop-to-buffer codegpt-buffer-name)
            (let ((original-point (point)))
