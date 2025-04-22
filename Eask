@@ -1,3 +1,5 @@
+;; -*- mode: eask; lexical-binding: t -*-
+
 (package "codegpt"
          "0.1.0"
          "Use GPT-3 tp help you write code")
